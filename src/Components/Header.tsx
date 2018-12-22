@@ -9,12 +9,17 @@ import { styles } from "../Utilities/HeaderStyle";
 import { IconButton } from "@material-ui/core";
 import Icon from "@material-ui/core/Icon";
 import { FormDialog } from "./FormDialog";
+import { connect } from "react-redux";
+import { PullSearchValue } from "../Actions/Search";
 
-interface Props extends WithStyles<typeof styles> {}
+interface Props extends WithStyles<typeof styles> {
+  PullSearchValue: Function;
+}
 
 class HeaderBase extends React.Component<Props> {
   state = {
-    open: false
+    open: false,
+    search: ""
   };
 
   handleClickOpen = () => {
@@ -24,8 +29,17 @@ class HeaderBase extends React.Component<Props> {
   handleClose = () => {
     this.setState({ open: false });
   };
+
+  handleSearch = (event: React.SyntheticEvent<{}>) => {
+    this.setState({
+      search: (event.target as HTMLInputElement).value
+    });
+    this.props.PullSearchValue((event.target as HTMLInputElement).value);
+  };
+
   render() {
     const { classes } = this.props;
+    const { search, open } = this.state;
     return (
       <div className={classes.root}>
         <AppBar position="static" style={{ backgroundColor: "#ab0f59" }}>
@@ -45,10 +59,12 @@ class HeaderBase extends React.Component<Props> {
               </div>
               <InputBase
                 placeholder="Search…"
+                value={search}
                 classes={{
                   root: classes.inputRoot,
                   input: classes.inputInput
                 }}
+                onChange={this.handleSearch}
               />
             </div>
             <div>
@@ -60,10 +76,15 @@ class HeaderBase extends React.Component<Props> {
             </div>
           </Toolbar>
         </AppBar>
-        <FormDialog open={this.state.open} handleClose={this.handleClose} />
+        <FormDialog open={open} handleClose={this.handleClose} />
       </div>
     );
   }
 }
 
-export const Header = withStyles(styles)(HeaderBase);
+export const Header = withStyles(styles)(
+  connect(
+    null,
+    { PullSearchValue }
+  )(HeaderBase)
+);

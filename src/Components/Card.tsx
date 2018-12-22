@@ -1,10 +1,5 @@
 import * as React from "react";
-import {
-  withStyles,
-  Theme,
-  createStyles,
-  WithStyles
-} from "@material-ui/core/styles";
+import { withStyles, WithStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import CardMedia from "@material-ui/core/CardMedia";
@@ -13,56 +8,59 @@ import Typography from "@material-ui/core/Typography";
 import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
 import { User } from "../Reducers/userListReducer";
+import { connect } from "react-redux";
+import { DeleteUser } from "../Actions/User";
 import moment from "moment";
-
-const styles = (theme: Theme) =>
-  createStyles({
-    card: {
-      display: "flex",
-      width: 350,
-      height: 200,
-      margin: theme.spacing.unit
-    },
-    details: {
-      display: "flex",
-      flexDirection: "column"
-    },
-    content: {
-      flex: "1 0 auto",
-      textAlign: "left"
-    },
-    cover: {
-      width: 200,
-      borderRadius: "50%"
-    },
-    controls: {
-      display: "flex",
-      alignItems: "center",
-      paddingLeft: theme.spacing.unit,
-      paddingBottom: theme.spacing.unit
-    },
-    playIcon: {
-      height: 38,
-      width: 38
-    }
-  });
+import _ from "lodash";
+import { styles } from "../Utilities/CardStyle";
 
 interface Props extends WithStyles<typeof styles> {
   user: User;
+  searchValue: string;
+  DeleteUser: Function;
+  handleClose: any;
+  handleOpen: any;
+  open: boolean;
 }
 
 class UserCardBase extends React.Component<Props> {
-  render() {
-    const { classes, user } = this.props;
+  handleBlodName() {
+    return this.props.searchValue.length > 0 ? (
+      <Typography
+        component="h5"
+        variant="h5"
+        dangerouslySetInnerHTML={{
+          __html: this.boldString(this.props.user.name, this.props.searchValue)
+        }}
+      />
+    ) : (
+      <Typography component="h5" variant="h5">
+        {this.props.user.name}
+      </Typography>
+    );
+  }
 
+  boldString(str: string, find: string) {
+    let re = new RegExp(find, "g");
+    console.log(_.startsWith(str, _.upperFirst(find)), str);
+    return _.startsWith(str, _.upperFirst(find))
+      ? str.replace(_.upperFirst(find), _.upperFirst(find).bold())
+      : str.replace(re, find.bold());
+  }
+
+  handleDelete() {
+    console.log(this.props);
+    this.props.DeleteUser(this.props.user);
+  }
+
+  render() {
+    const { classes, handleOpen, user } = this.props;
     return (
       <div>
         <Card className={classes.card}>
           <div className={classes.details}>
             <CardContent className={classes.content}>
-              <Typography component="h5" variant="h5">
-                {user.name}
-              </Typography>
+              {this.handleBlodName()}
               <Typography variant="subtitle1" color="textSecondary">
                 {user.gender}
               </Typography>
@@ -71,10 +69,13 @@ class UserCardBase extends React.Component<Props> {
               </Typography>
             </CardContent>
             <div className={classes.controls}>
-              <IconButton aria-label="Delete">
+              <IconButton
+                aria-label="Delete"
+                onClick={() => this.handleDelete()}
+              >
                 <Delete className={classes.playIcon} />
               </IconButton>
-              <IconButton aria-label="Update">
+              <IconButton aria-label="Update" onClick={() => handleOpen(user)}>
                 <Edit className={classes.playIcon} />
               </IconButton>
             </div>
@@ -82,7 +83,7 @@ class UserCardBase extends React.Component<Props> {
           <CardMedia
             className={classes.cover}
             image={user.image}
-            title="Yacine Farhat"
+            title={user.name}
           />
         </Card>
       </div>
@@ -90,4 +91,13 @@ class UserCardBase extends React.Component<Props> {
   }
 }
 
-export const UserCard = withStyles(styles)(UserCardBase);
+function mapStateToProps(props: Props) {
+  return { searchValue: props.searchValue };
+}
+
+export const UserCard = withStyles(styles)(
+  connect(
+    mapStateToProps,
+    { DeleteUser }
+  )(UserCardBase)
+);

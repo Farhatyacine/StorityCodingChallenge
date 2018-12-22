@@ -17,54 +17,99 @@ import {
   WithStyles
 } from "@material-ui/core/styles";
 import { FormLabel } from "@material-ui/core";
-
-const styles = (theme: Theme) =>
-  createStyles({
-    textField: {
-      marginLeft: theme.spacing.unit,
-      marginRight: theme.spacing.unit
-    },
-    group: {
-      marginLeft: theme.spacing.unit,
-      marginRight: theme.spacing.unit
-    }
-  });
+import { User } from "../Reducers/userListReducer";
+import { connect } from "react-redux";
+import { AddUser, UpdateUser } from "../Actions/User";
+import { styles } from "../Utilities/FormDialogStyle";
 
 interface Props extends WithStyles<typeof styles> {
   open: boolean;
   handleClose: any;
-  name?: string;
-  selectedDate?: Date;
-  gender?: string;
+  user?: User;
+  AddUser: Function;
+  UpdateUser: Function;
 }
 
 class FormDialogBase extends React.Component<Props> {
   state = {
-    name: this.props.name ? this.props.name : "",
-    selectedDate: this.props.selectedDate
-      ? this.props.selectedDate
-      : new Date(),
-    gender: this.props.gender ? this.props.gender : ""
+    user: {
+      name: "",
+      gender: "",
+      birthDay: new Date()
+    },
+    errorName: false
   };
+
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
+    if (nextProps.user !== this.props.user) {
+      this.setState({
+        user: nextProps.user
+      });
+    }
+  }
 
   handleNameChange = (event: SyntheticEvent<{}>) => {
     this.setState({
-      name: (event.target as HTMLInputElement).value
+      user: {
+        ...this.state.user,
+        name: (event.target as HTMLInputElement).value
+      },
+      errorName: true
     });
   };
 
   handleDateChange = (date: Date) => {
-    console.log(date);
-    this.setState({ selectedDate: date });
+    this.setState({
+      user: {
+        ...this.state.user,
+        birthDay: date
+      }
+    });
   };
 
   handleGenderChange = (event: SyntheticEvent<{}>) => {
-    event.persist();
-    this.setState({ gender: (event.target as HTMLInputElement).value });
+    this.setState({
+      user: {
+        ...this.state.user,
+        gender: (event.target as HTMLInputElement).value
+      }
+    });
+  };
+
+  handleAdd = () => {
+    if (this.state.user.name.length === 0) {
+      this.setState({
+        errorName: true
+      });
+    } else {
+      this.props.AddUser(this.state.user);
+      this.setState({
+        user: {
+          ...this.state.user,
+          name: "",
+          birthDay: new Date(),
+          gender: ""
+        }
+      });
+      this.props.handleClose();
+    }
+  };
+
+  handleEdit = () => {
+    if (this.state.user.name.length === 0) {
+      this.setState({
+        errorName: true
+      });
+    } else {
+      this.props.UpdateUser(this.state.user);
+      this.props.handleClose();
+    }
   };
 
   render() {
-    const { open, handleClose, classes, selectedDate } = this.props;
+    const { open, handleClose, classes } = this.props;
+    const { user, errorName } = this.state;
+    console.log(user);
     return (
       <div>
         <Dialog
@@ -74,7 +119,9 @@ class FormDialogBase extends React.Component<Props> {
           maxWidth={"sm"}
           fullWidth
         >
-          <DialogTitle id="form-dialog-title">Add user</DialogTitle>
+          <DialogTitle id="form-dialog-title">
+            {this.props.user ? "Update User" : "Add user"}
+          </DialogTitle>
           <DialogContent
             style={{
               display: "flex",
@@ -85,8 +132,10 @@ class FormDialogBase extends React.Component<Props> {
             <TextField
               label="Name"
               className={classes.textField}
-              value={this.state.name}
+              value={user.name}
               onChange={this.handleNameChange}
+              error={errorName === true}
+              helperText={user.name.length > 0 ? "" : "Please provide a name"}
               margin="normal"
               variant="outlined"
             />
@@ -101,7 +150,7 @@ class FormDialogBase extends React.Component<Props> {
               aria-label="Gender"
               name="gender"
               className={classes.group}
-              value={this.state.gender}
+              value={user.gender}
               onChange={this.handleGenderChange}
               style={{
                 display: "flex",
@@ -129,7 +178,7 @@ class FormDialogBase extends React.Component<Props> {
                 margin="normal"
                 label="Date picker"
                 className={classes.textField}
-                value={this.state.selectedDate}
+                value={user.birthDay}
                 onChange={this.handleDateChange}
                 variant="outlined"
                 format="dd MMMM yyyy"
@@ -141,9 +190,15 @@ class FormDialogBase extends React.Component<Props> {
             <Button onClick={handleClose} color="primary">
               Cancel
             </Button>
-            <Button onClick={handleClose} color="primary">
-              Subscribe
-            </Button>
+            {this.props.user ? (
+              <Button onClick={this.handleEdit} color="primary">
+                Edit
+              </Button>
+            ) : (
+              <Button onClick={this.handleAdd} color="primary">
+                Add
+              </Button>
+            )}
           </DialogActions>
         </Dialog>
       </div>
@@ -151,4 +206,9 @@ class FormDialogBase extends React.Component<Props> {
   }
 }
 
-export const FormDialog = withStyles(styles)(FormDialogBase);
+export const FormDialog = withStyles(styles)(
+  connect(
+    null,
+    { AddUser, UpdateUser }
+  )(FormDialogBase)
+);

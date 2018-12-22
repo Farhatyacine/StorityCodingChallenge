@@ -7,7 +7,7 @@ export const AddFakeUsers = (numberUsers: number) => {
     const n = _.random(0, 2);
     const obj = {
       _id: faker.random.number(),
-      name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      name: faker.name.firstName(),
       gender: n === 0 ? "male" : n === 1 ? "female" : "other",
       birthDay: new Date(faker.date.past()),
       image: faker.image.avatar()
