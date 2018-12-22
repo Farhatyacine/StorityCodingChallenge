@@ -12,13 +12,16 @@ import IconButton from "@material-ui/core/IconButton";
 import Typography from "@material-ui/core/Typography";
 import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
+import { User } from "../Reducers/userListReducer";
+import moment from "moment";
 
 const styles = (theme: Theme) =>
   createStyles({
     card: {
       display: "flex",
-      maxWidth: 400,
-      maxHeight: 200
+      width: 350,
+      height: 200,
+      margin: theme.spacing.unit
     },
     details: {
       display: "flex",
@@ -29,7 +32,8 @@ const styles = (theme: Theme) =>
       textAlign: "left"
     },
     cover: {
-      width: 170
+      width: 200,
+      borderRadius: "50%"
     },
     controls: {
       display: "flex",
@@ -43,11 +47,13 @@ const styles = (theme: Theme) =>
     }
   });
 
-interface Props extends WithStyles<typeof styles> {}
+interface Props extends WithStyles<typeof styles> {
+  user: User;
+}
 
 class UserCardBase extends React.Component<Props> {
   render() {
-    const { classes } = this.props;
+    const { classes, user } = this.props;
 
     return (
       <div>
@@ -55,13 +61,13 @@ class UserCardBase extends React.Component<Props> {
           <div className={classes.details}>
             <CardContent className={classes.content}>
               <Typography component="h5" variant="h5">
-                Live From Space
+                {user.name}
               </Typography>
               <Typography variant="subtitle1" color="textSecondary">
-                Mac Miller
+                {user.gender}
               </Typography>
               <Typography variant="subtitle1" color="textSecondary">
-                Mac Miller
+                {moment(user.birthDay).format("DD MMMM YYYY")}
               </Typography>
             </CardContent>
             <div className={classes.controls}>
@@ -75,7 +81,7 @@ class UserCardBase extends React.Component<Props> {
           </div>
           <CardMedia
             className={classes.cover}
-            image="https://img.icons8.com/color/1600/circled-user-male-skin-type-1-2.png"
+            image={user.image}
             title="Yacine Farhat"
           />
         </Card>

@@ -14,6 +14,10 @@ import FormLabel from "@material-ui/core/FormLabel";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Radio from "@material-ui/core/Radio";
+import { connect } from "react-redux";
+import { User } from "../Reducers/userListReducer";
+import _ from "lodash";
+import moment from "moment";
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -23,11 +27,15 @@ const styles = (theme: Theme) =>
       gridGap: `${theme.spacing.unit * 3}px`
     },
     paper: {
-      padding: theme.spacing.unit,
-      textAlign: "center",
+      padding: theme.spacing.unit * 4,
+      alignItems: "center",
       color: theme.palette.text.secondary,
       whiteSpace: "nowrap",
-      marginBottom: theme.spacing.unit
+      marginBottom: theme.spacing.unit,
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "start",
+      flexWrap: "wrap"
     },
     divider: {
       margin: `${theme.spacing.unit * 2}px 0`
@@ -43,35 +51,77 @@ const styles = (theme: Theme) =>
     }
   });
 
-interface Props extends WithStyles<typeof styles> {}
+interface Props extends WithStyles<typeof styles> {
+  userList?: User[];
+}
 
 class BodyBase extends React.Component<Props> {
   state = {
     gender: "",
-    birthDaySort: ""
+    birthDaySort: "",
+    users: []
   };
+
+  componentWillReceiveProps(nextProps: Props) {
+    if (nextProps.userList !== this.props.userList) {
+      this.setState({ users: nextProps.userList });
+    }
+  }
 
   handleGenderChange = (event: SyntheticEvent<{}>) => {
     event.persist();
-    console.log((event.target as HTMLInputElement).value);
-    this.setState({ gender: (event.target as HTMLInputElement).value });
+    this.state.birthDaySort === ""
+      ? this.setState({
+          gender: (event.target as HTMLInputElement).value,
+          users: _.filter(this.props.userList, (user: User) => {
+            return user.gender === (event.target as HTMLInputElement).value;
+          })
+        })
+      : this.setState({
+          gender: (event.target as HTMLInputElement).value,
+          users: _.filter(this.state.users, (user: User) => {
+            return user.gender === (event.target as HTMLInputElement).value;
+          })
+        });
   };
 
   handleBDChange = (event: SyntheticEvent<{}>) => {
     event.persist();
-    console.log((event.target as HTMLInputElement).value);
-    this.setState({ birthDaySort: (event.target as HTMLInputElement).value });
+    const val = (event.target as HTMLInputElement).value;
+    this.state.gender === ""
+      ? this.setState({
+          birthDaySort: val,
+          users:
+            val === "Ascendant"
+              ? _.sortBy(this.props.userList, function(o) {
+                  return moment(o.birthDay).format("YYYYMMDD");
+                })
+              : _.sortBy(this.props.userList, function(o) {
+                  return moment(o.birthDay).format("YYYYMMDD");
+                }).reverse()
+        })
+      : this.setState({
+          birthDaySort: val,
+          users:
+            val === "Ascendant"
+              ? _.sortBy(this.state.users, function(o: User) {
+                  return moment(o.birthDay).format("YYYYMMDD");
+                })
+              : _.sortBy(this.state.users, function(o: User) {
+                  return moment(o.birthDay).format("YYYYMMDD");
+                }).reverse()
+        });
   };
 
   handleAllChange = () => {
     this.setState({
       gender: "",
-      birthDaySort: ""
+      birthDaySort: "",
+      users: this.props.userList
     });
   };
   render() {
-    const { classes } = this.props;
-
+    const { classes, userList } = this.props;
     return (
       <div>
         <Grid container spacing={8}>
@@ -147,7 +197,9 @@ class BodyBase extends React.Component<Props> {
           </Grid>
           <Grid item xs={10}>
             <Paper className={classes.paper}>
-              <UserCard />
+              {_.map(this.state.users, (user: User) => (
+                <UserCard key={user._id} user={user} />
+              ))}
             </Paper>
           </Grid>
         </Grid>
@@ -156,4 +208,8 @@ class BodyBase extends React.Component<Props> {
   }
 }
 
-export let Body = withStyles(styles)(BodyBase);
+function mapStateToProps(props: Props) {
+  return { userList: props.userList };
+}
+
+export let Body = withStyles(styles)(connect(mapStateToProps)(BodyBase));
